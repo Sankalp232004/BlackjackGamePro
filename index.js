@@ -1,69 +1,144 @@
-let player = {
-    name: "Per",
-    chips: 200
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Game state
+    const game = {
+        player: {
+            name: "Player",
+            chips: 200,
+            bet: 10
+        },
+        cards: [],
+        sum: 0,
+        hasBlackjack: false,
+        isPlaying: false,
+        message: ""
+    };
 
-let cards = []
-let sum = 0
-let hasBlackJack = false
-let isAlive = false
-let message = ""
-let messageEl = document.getElementById("message-el")
-let sumEl = document.getElementById("sum-el")
-let cardsEl = document.getElementById("cards-el")
-let playerEl = document.getElementById("player-el")
+    // DOM elements
+    const elements = {
+        message: document.getElementById("message-el"),
+        cardsContainer: document.getElementById("cards-container"),
+        sum: document.getElementById("sum-el"),
+        player: document.getElementById("player-el"),
+        startBtn: document.getElementById("start-btn"),
+        newCardBtn: document.getElementById("new-card-btn")
+    };
 
-playerEl.textContent = player.name + ": $" + player.chips
+    // Event listeners
+    elements.startBtn.addEventListener('click', startGame);
+    elements.newCardBtn.addEventListener('click', newCard);
 
-function getRandomCard() {
-    let randomNumber = Math.floor(Math.random() * 13) + 1
-    if (randomNumber > 10) {
-        return 10
-    } else if (randomNumber === 1) {
-        return 11
-    } else {
-        return randomNumber
+    // Initialize game display
+    updatePlayerDisplay();
+
+    // Game functions
+    function getRandomCard() {
+        const randomValue = Math.floor(Math.random() * 13) + 1;
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const randomSuit = suits[Math.floor(Math.random() * 4)];
+        
+        let cardValue;
+        let displayValue;
+        
+        if (randomValue > 10) {
+            cardValue = 10;
+            if (randomValue === 11) displayValue = 'J';
+            else if (randomValue === 12) displayValue = 'Q';
+            else displayValue = 'K';
+        } else if (randomValue === 1) {
+            cardValue = 11;
+            displayValue = 'A';
+        } else {
+            cardValue = randomValue;
+            displayValue = randomValue;
+        }
+        
+        return {
+            value: cardValue,
+            display: displayValue,
+            suit: randomSuit
+        };
     }
-}
 
-function startGame() {
-    isAlive = true
-    let firstCard = getRandomCard()
-    let secondCard = getRandomCard()
-    cards = [firstCard, secondCard]
-    sum = firstCard + secondCard
-    renderGame()
-}
+    function startGame() {
+        // Check if player has enough chips
+        if (game.player.chips < game.player.bet) {
+            game.message = "Not enough chips!";
+            updateMessage();
+            return;
+        }
 
-function renderGame() {
-    cardsEl.textContent = "Cards: "
-    for (let i = 0; i < cards.length; i++) {
-        cardsEl.textContent += cards[i] + " "
-        // Optionally, you can add card images here
-        // const cardImage = document.createElement("img");
-        // cardImage.src = `path/to/card/images/${cards[i]}.png`; // Adjust path
-        // cardImage.classList.add("card");
-        // cardsEl.appendChild(cardImage);
+        // Reset game state
+        game.cards = [getRandomCard(), getRandomCard()];
+        game.sum = game.cards[0].value + game.cards[1].value;
+        game.hasBlackjack = false;
+        game.isPlaying = true;
+        
+        // Place bet
+        game.player.chips -= game.player.bet;
+        
+        // Update UI
+        renderGame();
+        updatePlayerDisplay();
+        toggleButtons();
     }
-    
-    sumEl.textContent = "Sum: " + sum
-    if (sum <= 20) {
-        message = "Do you want to draw a new card?"
-    } else if (sum === 21) {
-        message = "You've got Blackjack!"
-        hasBlackJack = true
-    } else {
-        message = "You're out of the game!"
-        isAlive = false
-    }
-    messageEl.textContent = message
-}
 
-function newCard() {
-    if (isAlive === true && hasBlackJack === false) {
-        let card = getRandomCard()
-        sum += card
-        cards.push(card)
-        renderGame()        
+    function newCard() {
+        if (game.isPlaying && !game.hasBlackjack) {
+            const card = getRandomCard();
+            game.cards.push(card);
+            game.sum += card.value;
+            renderGame();
+        }
     }
-}
+
+    function renderGame() {
+        // Clear cards container
+        elements.cardsContainer.innerHTML = "";
+        
+        // Display cards with suits
+        game.cards.forEach(card => {
+            const cardElement = document.createElement("div");
+            cardElement.className = `card ${card.suit}`;
+            cardElement.textContent = card.display;
+            elements.cardsContainer.appendChild(cardElement);
+        });
+        
+        // Update sum display
+        elements.sum.textContent = `Sum: ${game.sum}`;
+        
+        // Check game status
+        if (game.sum < 21) {
+            game.message = "Do you want to draw another card?";
+        } else if (game.sum === 21) {
+            game.message = "BLACKJACK! You win!";
+            game.hasBlackjack = true;
+            const winnings = Math.floor(game.player.bet * 2.5); // Blackjack pays 3:2
+            game.player.chips += winnings;
+            endGame();
+        } else {
+            game.message = "You busted! Game over.";
+            endGame();
+        }
+        
+        updateMessage();
+    }
+
+    function endGame() {
+        game.isPlaying = false;
+        toggleButtons();
+        updatePlayerDisplay();
+    }
+
+    function toggleButtons() {
+        elements.startBtn.disabled = game.isPlaying;
+        elements.newCardBtn.disabled = !game.isPlaying || game.hasBlackjack;
+    }
+
+    function updatePlayerDisplay() {
+        elements.player.textContent = `${game.player.name}: $${game.player.chips}`;
+    }
+
+    function updateMessage() {
+        elements.message.textContent = game.message;
+    }
+});
