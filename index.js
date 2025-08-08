@@ -1,4 +1,3 @@
-// Initialize game state
 const game = {
     player: {
         name: "Player",
@@ -11,7 +10,6 @@ const game = {
     isPlaying: false
 };
 
-// DOM elements
 const messageEl = document.getElementById("message-el");
 const cardsEl = document.getElementById("cards-el");
 const sumEl = document.getElementById("sum-el");
@@ -19,11 +17,9 @@ const playerEl = document.getElementById("player-el");
 const startBtn = document.getElementById("start-btn");
 const newCardBtn = document.getElementById("new-card-btn");
 
-// Event listeners
 startBtn.addEventListener("click", startGame);
 newCardBtn.addEventListener("click", newCard);
 
-// Initialize player display
 updatePlayer();
 
 function getRandomCard() {
@@ -96,7 +92,7 @@ function renderGame() {
     } else if (game.sum === 21) {
         messageEl.textContent = "BLACKJACK! You win!";
         game.hasBlackJack = true;
-        game.player.chips += Math.floor(game.player.bet * 2.5); // Blackjack pays 3:2
+        game.player.chips += Math.floor(game.player.bet * 2.5);
         endGame();
     } else {
         messageEl.textContent = "You're out of the game!";
